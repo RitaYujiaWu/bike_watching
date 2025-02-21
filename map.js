@@ -22,7 +22,7 @@ map.on('load', () => {
         type: 'line',
         source: 'boston_route',
         paint: {
-            'line-color': 'green',
+            'line-color': 'purple',
             'line-width': 3,
             'line-opacity': 0.4
         }
@@ -38,13 +38,15 @@ map.on('load', () => {
         type: 'line',
         source: 'cambridge_route',
         paint: {
-            'line-color': 'green',
+            'line-color': 'purple',
             'line-width': 3,
             'line-opacity': 0.4
         }
     });
+
     const svg = d3.select('#map').select('svg');
     let stations = [];
+    let departures, arrivals;
 
     // Load the nested JSON file
     const jsonurl = 'https://dsc106.com/labs/lab07/data/bluebikes-stations.json';
@@ -53,7 +55,7 @@ map.on('load', () => {
         
         console.log('Loaded JSON Data:', jsonData);
         
-        const stations = jsonData.data.stations;
+        stations = jsonData.data.stations;
         console.log('Stations Array:', stations);  // Log to verify structure
         
         const circles = svg.selectAll('circle')
@@ -66,17 +68,17 @@ map.on('load', () => {
             .attr('stroke-width', 0.7)    // Circle border thickness
             .attr('opacity', 0.8);      // Circle opacity
         
-            function getCoords(station) {
+        function getCoords(station) {
             const point = new mapboxgl.LngLat(+station.lon, +station.lat);  // Convert lon/lat to Mapbox LngLat
             const { x, y } = map.project(point);  // Project to pixel coordinates
             return { cx: x, cy: y };  // Return as object for use in SVG attributes
-            }
+        }
         
         function updatePositions() {
             circles
                 .attr('cx', d => getCoords(d).cx)  // Set the x-position using projected coordinates
                 .attr('cy', d => getCoords(d).cy); // Set the y-position using projected coordinates
-            }
+        }
         
         // Initial position update when map loads
         updatePositions();
@@ -86,10 +88,56 @@ map.on('load', () => {
         map.on('resize', updatePositions);   // Update on window resize
         map.on('moveend', updatePositions);  // Final adjustment after movement ends
 
+        const csvurl = 'https://dsc106.com/labs/lab07/data/bluebikes-traffic-2024-03.csv';
+        
+        d3.csv(csvurl).then(csvData => {
+            console.log('Loaded CSV Data:', csvData);
+            const trips = csvData;
+            console.log('Trips Array:', trips);
+
+            departures = d3.rollup(
+                trips,
+                (v) => v.length,
+                (d) => d.start_station_id,
+            );
+
+            arrivals = d3.rollup(
+                trips,
+                (v) => v.length,
+                (d) => d.end_station_id,
+            );
+
+            stations = stations.map((station) => {
+                let id = station.short_name;
+                station.arrivals = arrivals.get(id) ?? 0;
+                station.departures = departures.get(id) ?? 0;
+                station.totalTraffic = station.arrivals + station.departures;
+                return station;
+            });
+
+            console.log('Trips Array:', stations);
+
+            const radiusScale = d3
+                .scaleSqrt()
+                .domain([0, d3.max(stations, (d) => d.totalTraffic)])
+                .range([0, 25]);
+            
+            svg.selectAll('circle')
+                .data(stations)
+                .attr('r', d => radiusScale(d.totalTraffic))
+                .each(function(d) {
+                    // Add <title> for browser tooltips
+                    d3.select(this)
+                        .append('title')
+                        .text(`${d.totalTraffic} trips (${d.departures} departures, ${d.arrivals} arrivals)`);
+                });
+            // Update positions again to reflect the new radius
+            updatePositions();
+
         }).catch(error => {
-      console.error('Error loading JSON:', error);  // Handle errors if JSON loading fails
+            console.error('Error loading CSV:', error);  // Handle errors if CSV loading fails
+        });
+    }).catch(error => {
+    console.error('Error loading JSON:', error);  // Handle errors if JSON loading fails
     });
-
-
-    
 });
