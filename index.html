@@ -11,8 +11,15 @@
     <script src="https://d3js.org/d3.v7.min.js"></script>
 </head>
 <body>
-    <h1>Bike Watching</h1>
-    <p>🚴🏼‍♀️ Here you can follow bike routes </p>
+    <header style="display: flex; gap: 1em; align-items: baseline;">
+        <h1>Bike Watching</h1>
+        <label style="margin-left: auto;">
+            Filter by time: 
+            <input id="time-slider" type="range" min="-1" max="1440" value="-1">
+            <time id="selected-time"></time>
+            <em id="any-time">(any time)</em>
+        </label>
+    </header>
     <div id="map"> 
         <svg></svg>
     </div>

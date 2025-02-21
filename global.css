@@ -39,3 +39,12 @@ html, body {
     stroke-width: 1px;
     pointer-events: auto;
 }
+
+#selected-time, #any-time {
+    display: block;
+}
+
+#any-time {
+    color: gray;
+    font-style: italic;
+}
