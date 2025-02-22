@@ -40,7 +40,34 @@ html, body {
     pointer-events: auto;
 }
 
+/* Updated header styling */
+header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between; /* Title on the left, everything else on the right */
+    width: 100%;
+    padding: 0.5em 0;
+}
+
+/* Make the slider longer */
+#time-slider {
+    width: 250px;
+    appearance: none;
+    height: 6px;
+    background: #ddd;
+    border-radius: 5px;
+    outline: none;
+    opacity: 0.9;
+    transition: opacity 0.2s;
+}
+
+#time-slider:hover {
+    opacity: 1;
+}
+
 #selected-time, #any-time {
+    min-width: 80px; /* Ensures both elements take up the same space */
+    text-align: right; /* Aligns text to the right */
     display: block;
 }
 
