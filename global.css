@@ -33,11 +33,16 @@ html, body {
 }
 
 #map svg circle {
-    fill: #87898a;
     fill-opacity: 0.6;
     stroke: white;
     stroke-width: 1px;
     pointer-events: auto;
+    --color-departures: steelblue;
+    --color-arrivals: darkorange;
+    --color: color-mix(in oklch,
+        var(--color-departures) calc(100% * var(--departure-ratio)),
+        var(--color-arrivals));
+    fill: var(--color);
 }
 
 /* Updated header styling */
@@ -74,4 +79,45 @@ header {
 #any-time {
     color: gray;
     font-style: italic;
+}
+
+/* Apply color variables to both circles & legend blocks */
+#map circle, .legend > div {
+    --color-departures: steelblue;
+    --color-arrivals: darkorange;
+    --color: color-mix(in oklch,
+        var(--color-departures) calc(100% * var(--departure-ratio)),
+        var(--color-arrivals));
+    fill: var(--color);
+    background-color: var(--color); /* Ensure legend blocks use the same colors */
+}
+
+/* Legend container - uses flexbox for horizontal alignment */
+.legend {
+    display: flex;
+    justify-content: space-between; /* Spread items evenly */
+    align-items: center;
+    margin-block: 18.5px; /* Space between map and legend */
+    font-family: Arial, sans-serif;
+    width: 100%;
+}
+
+/* Individual block styling */
+.legend > div {
+    flex: 1; /* Equal width for all blocks */
+    padding: 10px 0; /* Balanced padding */
+    color: white; /* High contrast */
+    font-size: 14px;
+    font-weight: bold;
+    text-align: center;
+}
+
+/* Assign dynamic departure ratios */
+.legend > div:nth-child(1) { --departure-ratio: 1; } /* More Departures */
+.legend > div:nth-child(2) { --departure-ratio: 0.5; } /* Balanced */
+.legend > div:nth-child(3) { --departure-ratio: 0; } /* More Arrivals */
+
+/* Ensure the blocks do not touch */
+.legend > div:not(:last-child) {
+    margin-right: 1px;
 }

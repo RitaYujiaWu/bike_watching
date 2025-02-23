@@ -14,6 +14,7 @@ const map = new mapboxgl.Map({
 const svg = d3.select('#map').select('svg');
 let stations = [];
 let trips = [];
+let stationFlow = d3.scaleQuantize().domain([0, 1]).range([0, 0.5, 1]);
 
 function formatTime(minutes) {
     const date = new Date(0, 0, 0, 0, minutes);  // Set hours & minutes
@@ -56,7 +57,7 @@ map.on('load', async () => {
         type: 'line',
         source: 'boston_route',
         paint: {
-            'line-color': 'purple',
+            'line-color': 'green',
             'line-width': 3,
             'line-opacity': 0.4
         }
@@ -72,7 +73,7 @@ map.on('load', async () => {
         type: 'line',
         source: 'cambridge_route',
         paint: {
-            'line-color': 'purple',
+            'line-color': 'green',
             'line-width': 3,
             'line-opacity': 0.4
         }
@@ -94,21 +95,17 @@ map.on('load', async () => {
     const jsonurl = 'https://dsc106.com/labs/lab07/data/bluebikes-stations.json';
     
     d3.json(jsonurl).then(jsonData => {
-        
-        console.log('Loaded JSON Data:', jsonData);
-        
         stations = computeStationTraffic(jsonData.data.stations, trips);
-        console.log('Stations Array:', stations);  // Log to verify structure
         
         svg.selectAll('circle')
             .data(stations, (d) => d.short_name)
             .enter()
             .append('circle')
             .attr('r', 4.5)               // Radius of the circle
-            .attr('fill', '#87898a')  // Circle fill color
             .attr('stroke', 'white')    // Circle border color
             .attr('stroke-width', 0.7)    // Circle border thickness
-            .attr('opacity', 0.8);      // Circle opacity
+            .attr('opacity', 0.8)      // Circle opacity
+            .style('--departure-ratio', d => stationFlow(d.departures / d.totalTraffic))
         
         // Initial position update when map loads
         updatePositions();
@@ -193,12 +190,13 @@ map.on('load', async () => {
             .data(filteredStations, (d) => d.short_name)
             .join('circle')
             .attr('r', (d) => radiusScale(d.totalTraffic))
+            .style('--departure-ratio', d => stationFlow(d.departures / d.totalTraffic))
             .each(function(d) {
                 const circle = d3.select(this);
                 circle.select('title').remove();
                 circle.append('title')
                     .text(`${d.totalTraffic} trips (${d.departures} departures, ${d.arrivals} arrivals)`);
-            });
+            })
     }
 
     function updateTimeDisplay() {
